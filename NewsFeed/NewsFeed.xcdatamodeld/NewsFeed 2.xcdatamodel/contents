@@ -7,6 +7,7 @@
         <attribute name="title" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="url" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
+    <fetchRequest name="Article" entity="Article"/>
     <elements>
         <element name="Article" positionX="-63" positionY="-18" width="128" height="120"/>
     </elements>
