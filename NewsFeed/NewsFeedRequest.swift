@@ -20,6 +20,25 @@ class NewsFeedRequest {
     var newsFeed: [ArticleModel]! {
         didSet {
             delegate.updateTableView()
+//            var numberCashedNewsFeed: Int!
+            let numberNewsFeed = newsFeed.count
+            if numberNewsFeed > 5 {
+                var isReadyForSaving = true
+                for index in 1...5 {
+                    if newsFeed[index].image == nil {
+                        isReadyForSaving = false
+//                        break
+                    }
+                }
+                if isReadyForSaving == true {
+                    var cashedNewsFeed = [ArticleModel]()
+                    for index in 1...5 {
+                        cashedNewsFeed.append(newsFeed[index])
+                    }
+                    self.dataManager.saveNews(for: cashedNewsFeed)
+                }
+
+            }
         }
     }
     
@@ -102,13 +121,6 @@ class NewsFeedRequest {
                     
                 }
                 
-                var tempArray = [ArticleModel]()
-                
-                for index in 0...4 {
-                    tempArray.append(newsFeed[index])
-                }
-                
-                dataManager.saveNews(for: tempArray)
                 
             }
             
@@ -137,7 +149,7 @@ class NewsFeedRequest {
             print("URL is gone")
             let image = UIImage(named: "No-images-placeholder")
             completion(image!)
-        }
+        } 
         
     }
     

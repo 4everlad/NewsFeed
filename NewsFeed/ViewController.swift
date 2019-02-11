@@ -8,7 +8,34 @@
 
 import UIKit
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, NewsFeedUpdateDelegate {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, NewsFeedUpdateDelegate, UISearchResultsUpdating {
+    
+    
+    var filteredNewsFeed = [ArticleModel]()
+    var resultSearchController = UISearchController()
+    
+    
+    func updateSearchResults(for searchController: UISearchController) {
+        filteredNewsFeed.removeAll(keepingCapacity: false)
+        
+        if let searchText = searchController.searchBar.text,
+            !searchText.isEmpty {
+            filteredNewsFeed.removeAll()
+            
+            if let newsFeed = newsFeedRequest.newsFeed {
+                for index in 0..<newsFeed.count {
+                    if newsFeed[index].title!.lowercased().contains(
+                        searchText.lowercased()) {
+                        filteredNewsFeed.append(newsFeed[index])
+                    }
+                }
+            }
+            
+        }
+        
+        self.tableView.reloadData()
+    }
+    
     
     var newsFeedRequest = NewsFeedRequest.shared
     
@@ -34,7 +61,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return newsFeedRequest.newsFeed.count
+        
+        if  (resultSearchController.isActive) {
+            return filteredNewsFeed.count
+        } else {
+            return newsFeedRequest.newsFeed.count
+        }
+        
+        
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -42,24 +76,40 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         if indexPath.row == 0 {
             let cell = tableView.dequeueReusableCell(withIdentifier: "NewsFeedCell", for: indexPath) as! NewsFeedTableViewCell
             
-            let article = newsFeedRequest.newsFeed[indexPath.section]
+            if (resultSearchController.isActive) {
+                let article = filteredNewsFeed[indexPath.section]
+                cell.articleImg = article.image
+                cell.title = article.title
+                
+                return cell
+            } else {
+                let article = newsFeedRequest.newsFeed[indexPath.section]
+                cell.articleImg = article.image
+                cell.title = article.title
+                
+                return cell
+            }
             
-            cell.articleImg = article.image
-            cell.title = article.title
-            
-            return cell
         }
         
         if indexPath.row == 1 {
             let cell = tableView.dequeueReusableCell(withIdentifier: "DetailedNewsFeedCell", for: indexPath) as! DetailedNewsFeedTableViewCell
+            if (resultSearchController.isActive) {
+                let article = filteredNewsFeed[indexPath.section]
+                cell.newsDescription = article.description
+                cell.publishedAt = article.publishedAt
+                cell.url = article.url
+                
+                return cell
+            } else {
+                let article = newsFeedRequest.newsFeed[indexPath.section]
+                cell.newsDescription = article.description
+                cell.publishedAt = article.publishedAt
+                cell.url = article.url
+                
+                return cell
+            }
             
-            let article = newsFeedRequest.newsFeed[indexPath.section]
-            
-            cell.newsDescription = article.description
-            cell.publishedAt = article.publishedAt
-            cell.url = article.url
-            
-            return cell
         }
         
         return UITableViewCell()
@@ -94,6 +144,18 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         tableView.register(UINib(nibName: "DetailedNewsFeedTableViewCell", bundle: Bundle.main), forCellReuseIdentifier: "DetailedNewsFeedCell")
         
+        resultSearchController = ({
+            let controller = UISearchController(searchResultsController: nil)
+            controller.searchResultsUpdater = self
+            controller.dimsBackgroundDuringPresentation = false
+            controller.searchBar.sizeToFit()
+            
+            tableView.tableHeaderView = controller.searchBar
+            
+            return controller
+        })()
+        
+        tableView.reloadData()
         // Do any additional setup after loading the view, typically from a nib.
     }
     
