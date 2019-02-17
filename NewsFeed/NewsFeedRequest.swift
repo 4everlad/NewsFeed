@@ -13,7 +13,7 @@ class NewsFeedRequest {
     
     static let shared = NewsFeedRequest()
     
-    var dataManager = DataManager.shared
+    
     
     var delegate: NewsFeedUpdateDelegate!
     
@@ -21,30 +21,30 @@ class NewsFeedRequest {
         didSet {
             delegate.updateTableView()
 //            var numberCashedNewsFeed: Int!
-            let numberNewsFeed = newsFeed.count
-            if numberNewsFeed > 5 {
-                var isReadyForSaving = true
-                for index in 1...5 {
-                    if newsFeed[index].image == nil {
-                        isReadyForSaving = false
-//                        break
-                    }
-                }
-                if isReadyForSaving == true {
-                    var cashedNewsFeed = [ArticleModel]()
-                    for index in 1...5 {
-                        cashedNewsFeed.append(newsFeed[index])
-                    }
-                    self.dataManager.saveNews(for: cashedNewsFeed)
-                }
-
-            }
+//            let numberNewsFeed = newsFeed.count
+//            if numberNewsFeed > 5 {
+//                var isReadyForSaving = true
+//                for index in 1...5 {
+//                    if newsFeed[index].image == nil {
+//                        isReadyForSaving = false
+////                        break
+//                    }
+//                }
+//                if isReadyForSaving == true {
+//                    var cashedNewsFeed = [ArticleModel]()
+//                    for index in 1...5 {
+//                        cashedNewsFeed.append(newsFeed[index])
+//                    }
+//                    self.dataManager.saveNews(for: cashedNewsFeed)
+//                }
+//
+//            }
         }
     }
     
-    func requestNews() {
+    func requestNews(keyword: String) {
         
-        let url = URL(string: "https://newsapi.org/v2/top-headlines?country=us&apiKey=b59bc1f13f884301a259ebc4a7c68af2")!
+        let url = URL(string: "https://newsapi.org/v2/everything?q=\(keyword)&apiKey=b59bc1f13f884301a259ebc4a7c68af2")!
         
         let dataTask = URLSession.shared.dataTask(with: url) { data, response, error in
             guard error == nil,
@@ -52,11 +52,11 @@ class NewsFeedRequest {
                 let data = data
                 else {
                     print("No connection")
-                    if let cashedNewsFeed = self.dataManager.readNews() {
-                        self.newsFeed = cashedNewsFeed
-                    } else {
-                        print("No cashed NewsFeed")
-                    }
+//                    if let cashedNewsFeed = self.dataManager.readNews() {
+//                        self.newsFeed = cashedNewsFeed
+//                    } else {
+//                        print("No cashed NewsFeed")
+//                    }
                     return
             }
             print("quote: \(data)")
@@ -97,7 +97,7 @@ class NewsFeedRequest {
                     if let urlToImage = article.urlToImage {
                         downloadImage(from: urlToImage, completion: { downloadedImage in
                             articleForNewsFeed.image = downloadedImage
-//                            self.tableView.reloadData()
+                            self.delegate.updateTableView()
                         } )
                     } else {
                         articleForNewsFeed.image = UIImage(named: "No-images-placeholder")
@@ -141,8 +141,12 @@ class NewsFeedRequest {
                 print(response?.suggestedFilename ?? imageUrl.lastPathComponent)
                 print("Image Download Finished")
                 image = UIImage(data: data)
-                completion(image!)
-                
+                if let parsedImage = image {
+                    completion(parsedImage)
+                } else {
+                    let image = UIImage(named: "No-images-placeholder")
+                    completion(image!)
+                }
             })
             print("b")
         } else {
@@ -161,6 +165,6 @@ class NewsFeedRequest {
     init() {
         newsFeed = [ArticleModel]()
         
-        requestNews()
+//        requestNews()
     }
 }

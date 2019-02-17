@@ -15,6 +15,7 @@ class ArticleModel {
     var title: String?
     var description: String?
     var url: String?
+    var isSeen = false
     
     init() {
         publishedAt = Date()

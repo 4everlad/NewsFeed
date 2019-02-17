@@ -30,12 +30,25 @@ class DetailedNewsFeedTableViewCell: UITableViewCell {
         }
     }
     
-    @IBOutlet weak var newsDescriptionLabel: UILabel!
-    
     @IBOutlet weak var publishedAtLabel: UILabel!
     
-    @IBOutlet weak var urlLabel: UILabel!
+    @IBOutlet weak var newsDescriptionLabel: UILabel! {
+        didSet {
+            newsDescriptionLabel.numberOfLines = 0
+            newsDescriptionLabel.sizeToFit()
+
+        }
+    }
     
+    
+    @IBOutlet weak var urlLabel: UILabel! {
+        didSet {
+            urlLabel.numberOfLines = 0
+            urlLabel.sizeToFit()
+        }
+    }
+
+
 
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -49,3 +62,4 @@ class DetailedNewsFeedTableViewCell: UITableViewCell {
     }
     
 }
+
