@@ -10,11 +10,12 @@ import UIKit
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, NewsFeedUpdateDelegate, UISearchResultsUpdating, UISearchBarDelegate {
     
+    var dataManager = DataManager.shared
     
     var filteredNewsFeed = [ArticleModel]()
     var resultSearchController = UISearchController()
     
-    var newsFeedRequest = NewsFeedRequest.shared
+//    var newsFeedRequest = NewsFeedRequest.shared
     
     var isSearching : Bool!
     
@@ -40,9 +41,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     func numberOfSections(in tableView: UITableView) -> Int {
         
         if  (resultSearchController.isActive) {
-            return newsFeedRequest.newsFeed.count
-        } else {
-            return newsFeedRequest.newsFeed.count
+            return dataManager.newsFeed.count
+        }
+        else {
+            return 0
+//            return newsFeedRequest.newsFeed.count
         }
         
         // dataManager.cashedNewsFeed.count
@@ -52,7 +55,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         if (resultSearchController.isActive) {
             if indexPath.row == 0 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "NewsFeedCell", for: indexPath) as! NewsFeedTableViewCell
-                let article = newsFeedRequest.newsFeed[indexPath.section]
+                let article = dataManager.newsFeed[indexPath.section]
                 cell.articleImg = article.image
                 cell.title = article.title
                 cell.isSeen = article.isSeen
@@ -64,7 +67,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             if indexPath.row == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "DetailedNewsFeedCell", for: indexPath) as! DetailedNewsFeedTableViewCell
                 
-                let article = newsFeedRequest.newsFeed[indexPath.section]
+                let article = dataManager.newsFeed[indexPath.section]
                 cell.newsDescription = article.description
                 cell.publishedAt = article.publishedAt
                 cell.url = article.url
@@ -94,7 +97,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 tableView.endUpdates()
             } else {
                 expandedIndexes.insert(indexPath.section)
-                newsFeedRequest.newsFeed[indexPath.section].isSeen = true
+                dataManager.newsFeed[indexPath.section].isSeen = true
                 tableView.beginUpdates()
                 tableView.insertRows(at: [IndexPath(row: 1, section: indexPath.section)], with: .automatic)
                 tableView.reloadRows(at: [IndexPath(row: 0, section: indexPath.section)], with: .none)
@@ -114,28 +117,75 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     
+    func prepareText(for text: String) -> String {
+        
+        var preparedText =  text.trimmingCharacters(in: .whitespacesAndNewlines)
+        preparedText = preparedText.replacingOccurrences(of: " ", with: "+")
+        preparedText = preparedText.lowercased()
+        
+        return preparedText
+    }
+    
+    
+    func showAlert() {
+        let alertController = UIAlertController(title: "Search is only available in English", message:
+            "", preferredStyle: .alert)
+        alertController.addAction(UIAlertAction(title: "Dismiss", style: .default))
+        
+        if let presentedVC = presentedViewController {
+            presentedVC.present(alertController, animated: true, completion: nil)
+        } else {
+            present(alertController, animated: true, completion: nil)
+        }
+//        self.present(alertController, animated: true)
+    }
+    
     func updateSearchResults(for searchController: UISearchController) {
         
-        newsFeedRequest.newsFeed.removeAll()
+        dataManager.newsFeed.removeAll()
         expandedIndexes.removeAll()
         
         if let searchText = searchController.searchBar.text,
             !searchText.isEmpty {
+            var text = searchText
+            text = text.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: " ", with: "")
             
-            let performSearch = DispatchWorkItem (qos: .userInteractive, flags:[.enforceQoS]) {
-                if searchText == searchController.searchBar.text {
-                    var preparedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-                    preparedSearchText = preparedSearchText.replacingOccurrences(of: " ", with: "+")
-                    preparedSearchText = preparedSearchText.lowercased()
+            if text.isAlphanumeric {
+//                if let searchText = searchController.searchBar.text,
+//                    !searchText.isEmpty {
+                
+                let performSearch = DispatchWorkItem (qos: .userInteractive, flags:[.enforceQoS]) {
+                    if searchText == searchController.searchBar.text {
+                            
+                        let preparedSearchText = self.prepareText(for: searchText)
+                            
+                        self.dataManager.performSearch(keyword: preparedSearchText, completion: { result, error in
+                            if result == true {
+                                    // make saving to database
+                                DispatchQueue.main.async {
+                                    self.tableView.reloadData()
+                                }
+                            } else {
+                                print ("Search is not available")
+                                    // show alert
+                            }
+                        })
+                        }
+                    }
                     
-                    self.newsFeedRequest.requestNews(keyword: preparedSearchText)
-                }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: performSearch)
+                    
+                    isSearching = true
+                    
+//                }
+            } else {
+                showAlert()
+                searchController.searchBar.text?.removeAll()
+                print("убирайся сука")
+                view.endEditing(true)
+                
+                // show alert
             }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: performSearch)
-            
-            isSearching = true
-            
         } else {
             isSearching = false
             view.endEditing(true)
@@ -143,6 +193,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         self.tableView.reloadData()
     }
+    
     
     
 
@@ -153,7 +204,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         expandedIndexes = Set<Int>()
         
-        newsFeedRequest.delegate = self
+        dataManager.delegate = self
         
         self.tableView.dataSource = self
         self.tableView.delegate = self
@@ -195,9 +246,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         self.tableView.reloadData()
     }
     
+    
 
 }
 
 protocol NewsFeedUpdateDelegate {
     func updateTableView()
+}
+
+extension String {
+    var isAlphanumeric: Bool {
+        return !isEmpty && range(of: "[^a-zA-Z0-9]", options: .regularExpression) == nil
+    }
 }

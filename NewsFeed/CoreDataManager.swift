@@ -18,7 +18,6 @@ class CoreDataManager {
     
     static let shared = CoreDataManager()
     
-    
     func readNews() -> [ArticleModel]? {
         
         var articles = [ArticleModel]()
@@ -28,18 +27,18 @@ class CoreDataManager {
         
         do {
             let result = try context.fetch(request)
-                for article in result as! [NSManagedObject] {
-                    let articleToAdd = ArticleModel()
-                    articleToAdd.title = (article.value(forKey: "title") as! String)
-                    articleToAdd.description = (article.value(forKey: "newsDescription") as! String)
-                    articleToAdd.publishedAt = (article.value(forKey: "publishedAt") as! Date)
-                    
-                    if let dataImage = article.value(forKey: "image") as? Data {
-                        let image = UIImage(data: dataImage)
-                        articleToAdd.image = image
-                    }
-                    
-                    articles.append(articleToAdd)
+            for article in result as! [NSManagedObject] {
+                let articleToAdd = ArticleModel()
+                articleToAdd.title = (article.value(forKey: "title") as! String)
+                articleToAdd.description = (article.value(forKey: "newsDescription") as! String)
+                articleToAdd.publishedAt = (article.value(forKey: "publishedAt") as! Date)
+                
+                if let dataImage = article.value(forKey: "image") as? Data {
+                    let image = UIImage(data: dataImage)
+                    articleToAdd.image = image
+                }
+                
+                articles.append(articleToAdd)
                 
             }
         } catch {
@@ -59,7 +58,7 @@ class CoreDataManager {
         
         for article in articles {
             let insertNewArticle = NSEntityDescription.insertNewObject(forEntityName: "Article",
-                                                                            into: context) as! Article
+                                                                       into: context) as! Article
             insertNewArticle.title = article.title
             insertNewArticle.newsDescription = article.description
             insertNewArticle.publishedAt = article.publishedAt
@@ -70,7 +69,7 @@ class CoreDataManager {
         }
         
         performSave()
-
+        
     }
     
     func deleteNews() {

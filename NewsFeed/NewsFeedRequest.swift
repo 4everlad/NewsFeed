@@ -12,14 +12,13 @@ import UIKit
 class NewsFeedRequest {
     
     static let shared = NewsFeedRequest()
+
     
+//    var delegate: NewsFeedUpdateDelegate!
     
-    
-    var delegate: NewsFeedUpdateDelegate!
-    
-    var newsFeed: [ArticleModel]! {
-        didSet {
-            delegate.updateTableView()
+//    var newsFeed: [ArticleModel]! {
+//        didSet {
+//            delegate.updateTableView()
 //            var numberCashedNewsFeed: Int!
 //            let numberNewsFeed = newsFeed.count
 //            if numberNewsFeed > 5 {
@@ -39,10 +38,10 @@ class NewsFeedRequest {
 //                }
 //
 //            }
-        }
-    }
+//        }
+//    }
     
-    func requestNews(keyword: String) {
+    func requestNews(keyword: String, completion: @escaping ([ArticleModel]?, Error?)->()) {
         
         let url = URL(string: "https://newsapi.org/v2/everything?q=\(keyword)&apiKey=b59bc1f13f884301a259ebc4a7c68af2")!
         
@@ -57,18 +56,24 @@ class NewsFeedRequest {
 //                    } else {
 //                        print("No cashed NewsFeed")
 //                    }
+                    completion(nil, error)
                     return
             }
             print("quote: \(data)")
-            self.parseNews(data: data)
+            if let newsFeed = self.parseNews(data: data) {
+                completion(newsFeed, nil)
+            } else {
+                completion(nil, nil)
+            }
         }
         
         dataTask.resume()
     }
     
     
-    func parseNews(data: Data) {
+    func parseNews(data: Data) -> [ArticleModel]? {
         
+        var newsFeed: [ArticleModel]!
         
         struct ParseNews: Codable {
             var articles: [ParseArticle]?
@@ -87,8 +92,10 @@ class NewsFeedRequest {
             
             if let articles = response.articles {
                 
-                for (index, article) in articles.enumerated() {
-                    var articleForNewsFeed = ArticleModel()
+                newsFeed = [ArticleModel]()
+                
+                for article in articles {
+                    let articleForNewsFeed = ArticleModel()
                     
                     if let title = article.title {
                         articleForNewsFeed.title = title
@@ -97,7 +104,7 @@ class NewsFeedRequest {
                     if let urlToImage = article.urlToImage {
                         downloadImage(from: urlToImage, completion: { downloadedImage in
                             articleForNewsFeed.image = downloadedImage
-                            self.delegate.updateTableView()
+//                            self.delegate.updateTableView()
                         } )
                     } else {
                         articleForNewsFeed.image = UIImage(named: "No-images-placeholder")
@@ -126,8 +133,24 @@ class NewsFeedRequest {
             
         } catch {
             print("JSON parsing error: " + error.localizedDescription)
+//            completion(nil, error)
+            return nil
         }
         
+        
+//        var isParsed = false
+        
+//        while(!isParsed) {
+//            for article in newsFeed {
+//                isParsed = true
+//                if article.image == nil {
+//                    isParsed = false
+//                    break
+//                }
+//            }
+//        }
+        
+        return newsFeed
     }
     
     
@@ -137,7 +160,9 @@ class NewsFeedRequest {
             print("Image Download Started")
             var image: UIImage?
             getData(from: imageUrl, completion: { data, response, error in
-                guard let data = data, error == nil else { return }
+                guard let data = data, error == nil else { let image = UIImage(named: "No-images-placeholder")
+                    completion(image!)
+                    return }
                 print(response?.suggestedFilename ?? imageUrl.lastPathComponent)
                 print("Image Download Finished")
                 image = UIImage(data: data)
@@ -163,7 +188,7 @@ class NewsFeedRequest {
     }
     
     init() {
-        newsFeed = [ArticleModel]()
+//        newsFeed = [ArticleModel]()
         
 //        requestNews()
     }
