@@ -41,9 +41,9 @@ class NewsFeedRequest {
 //        }
 //    }
     
-    func requestNews(keyword: String, completion: @escaping ([ArticleModel]?, Error?)->()) {
+    func requestNews(searchText: String, completion: @escaping ([ArticleModel]?, Error?)->()) {
         
-        let url = URL(string: "https://newsapi.org/v2/everything?q=\(keyword)&apiKey=b59bc1f13f884301a259ebc4a7c68af2")!
+        let url = URL(string: "https://newsapi.org/v2/everything?q=\(searchText)&apiKey=b59bc1f13f884301a259ebc4a7c68af2")!
         
         let dataTask = URLSession.shared.dataTask(with: url) { data, response, error in
             guard error == nil,

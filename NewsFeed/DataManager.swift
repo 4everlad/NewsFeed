@@ -18,18 +18,26 @@ class DataManager {
     
     var delegate: NewsFeedUpdateDelegate!
     
-    var newsFeed: [ArticleModel]!
+    var newsFeed: [ArticleModel]! {
+            didSet {
+                delegate.updateTableView()
+        }
+    }
     
-    var cashedNewsFeeds: [String : [ArticleModel]]!
+//    var search
+    
+//    let mySerialQueue = DispatchQueue(label: "com.NewsFeed.mySerial")
+    
+    var cashedNewsFeeds: [SearchRequestModel : [ArticleModel]]!
     
     
-    
-    func performSearch(keyword: String, completion: ((_ success: Bool, _ error: Error?) -> Void)? ) {
-        newsFeedRequest.requestNews(keyword: keyword, completion: { parsedNewsFeed, error in
+    func performSearch(searchText: String, completion: ((_ success: Bool, _ error: Error?) -> Void)? ) {
+        newsFeedRequest.requestNews(searchText: searchText, completion: { parsedNewsFeed, error in
             if error == nil {
                 if let newsFeed = parsedNewsFeed {
+        
                     self.newsFeed = newsFeed
-                    //                    saveNewsSearch(search: String, news: [ArticleModel])
+                    self.saveNewsSearch(search: searchText, news: newsFeed)
                     completion!(true, nil)
                 } else {
                     completion!(false, nil)
@@ -42,7 +50,9 @@ class DataManager {
     
     func saveNewsSearch(search: String, news: [ArticleModel]) {
         if cashedNewsFeeds.count < 5 {
-            cashedNewsFeeds[search] = news
+            let searchRequest = SearchRequestModel(text: search)
+            printCashedHash(search: searchRequest)
+            cashedNewsFeeds![searchRequest] = news
         } else {
             
         }
@@ -50,6 +60,10 @@ class DataManager {
     
     func loadCashedNewsFeeds() {
         
+    }
+    
+    func printCashedHash(search: SearchRequestModel) {
+        print("hashValue:\(search.hashValue)")
     }
     
     init() {

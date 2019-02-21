@@ -7,12 +7,13 @@
         <attribute name="title" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="url" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
-    <entity name="HistorySearch" representedClassName="HistorySearch" syncable="YES" codeGenerationType="class">
-        <attribute name="searchResult" optional="YES" attributeType="String" syncable="YES"/>
+    <entity name="SearchRequest" representedClassName="SearchRequest" syncable="YES" codeGenerationType="class">
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="text" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
     <fetchRequest name="Article" entity="Article"/>
     <elements>
         <element name="Article" positionX="-63" positionY="-18" width="128" height="120"/>
-        <element name="HistorySearch" positionX="-63" positionY="18" width="128" height="60"/>
+        <element name="SearchRequest" positionX="-63" positionY="18" width="128" height="75"/>
     </elements>
 </model>

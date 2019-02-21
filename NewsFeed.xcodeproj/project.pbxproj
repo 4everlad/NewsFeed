@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3A4E4DAC221D4620005F3DB2 /* SearchRequestModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A4E4DAB221D4620005F3DB2 /* SearchRequestModel.swift */; };
 		3A6D22D4220211A50035735C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6D22D3220211A50035735C /* AppDelegate.swift */; };
 		3A6D22D6220211A50035735C /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6D22D5220211A50035735C /* ViewController.swift */; };
 		3A6D22D9220211A50035735C /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3A6D22D7220211A50035735C /* Main.storyboard */; };
@@ -26,6 +27,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		3A4E4DAB221D4620005F3DB2 /* SearchRequestModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchRequestModel.swift; sourceTree = "<group>"; };
 		3A6D22D0220211A50035735C /* NewsFeed.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NewsFeed.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3A6D22D3220211A50035735C /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3A6D22D5220211A50035735C /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -90,6 +92,7 @@
 				3A6D2300220C92B10035735C /* ArticleModel.swift */,
 				3ACE988822198F9A0064ADBB /* DataManager.swift */,
 				3ACE988A221ADD200064ADBB /* CoreDataManager.swift */,
+				3A4E4DAB221D4620005F3DB2 /* SearchRequestModel.swift */,
 			);
 			path = NewsFeed;
 			sourceTree = "<group>";
@@ -188,6 +191,7 @@
 				3A6D22F4220A058B0035735C /* DetailedNewsFeedTableViewCell.swift in Sources */,
 				3A6D22EE220423D20035735C /* NewsFeedTableViewCell.swift in Sources */,
 				3A6D22FD220B3B0E0035735C /* NewsFeedRequest.swift in Sources */,
+				3A4E4DAC221D4620005F3DB2 /* SearchRequestModel.swift in Sources */,
 				3A6D2306220D85D70035735C /* NewsFeed.xcdatamodeld in Sources */,
 				3ACE988B221ADD200064ADBB /* CoreDataManager.swift in Sources */,
 				3A6D22D4220211A50035735C /* AppDelegate.swift in Sources */,

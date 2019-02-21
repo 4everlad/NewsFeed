@@ -154,12 +154,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
 //                if let searchText = searchController.searchBar.text,
 //                    !searchText.isEmpty {
                 
-                let performSearch = DispatchWorkItem (qos: .userInteractive, flags:[.enforceQoS]) {
+                let performSearch = DispatchWorkItem (qos: .userInitiated, flags:[.enforceQoS]) {
                     if searchText == searchController.searchBar.text {
                             
                         let preparedSearchText = self.prepareText(for: searchText)
                             
-                        self.dataManager.performSearch(keyword: preparedSearchText, completion: { result, error in
+                        self.dataManager.performSearch(searchText: preparedSearchText, completion: { result, error in
                             if result == true {
                                     // make saving to database
                                 DispatchQueue.main.async {
@@ -181,7 +181,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             } else {
                 showAlert()
                 searchController.searchBar.text?.removeAll()
-                print("убирайся сука")
                 view.endEditing(true)
                 
                 // show alert
