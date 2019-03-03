@@ -9,6 +9,15 @@
 import UIKit
 
 class HistorySearchTableViewCell: UITableViewCell {
+    
+    var searchRequest: String? {
+        didSet {
+            searchRequestLabel.text = searchRequest
+        }
+    }
+    
+    @IBOutlet weak var searchRequestLabel: UILabel!
+    
 
     override func awakeFromNib() {
         super.awakeFromNib()

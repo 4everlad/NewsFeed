@@ -7,70 +7,178 @@
 //
 
 import Foundation
+import UIKit
 
 class DataManager {
     
     static let shared = DataManager()
     
-//    var dataManager = DataManager.shared
+    var coreDataManager = CoreDataManager.shared
     
     var newsFeedRequest = NewsFeedRequest.shared
     
+    var imageRequest = ImageRequest.shared
+    
+    var imageFileManager = ImageFileManager.shared
+    
     var delegate: NewsFeedUpdateDelegate!
     
-    var newsFeed: [ArticleModel]! {
-            didSet {
-                delegate.updateTableView()
-        }
-    }
+    var newsFeed: [ArticleModel]!
+
     
-//    var search
+    let mySerialQueue = DispatchQueue(label: "com.NewsFeed.mySerial")
     
-//    let mySerialQueue = DispatchQueue(label: "com.NewsFeed.mySerial")
     
     var cashedNewsFeeds: [SearchRequestModel : [ArticleModel]]!
-    
     
     func performSearch(searchText: String, completion: ((_ success: Bool, _ error: Error?) -> Void)? ) {
         newsFeedRequest.requestNews(searchText: searchText, completion: { parsedNewsFeed, error in
             if error == nil {
                 if let newsFeed = parsedNewsFeed {
-        
-                    self.newsFeed = newsFeed
-                    self.saveNewsSearch(search: searchText, news: newsFeed)
+                    
+                    // добавить getimages(for newsFeed)
+                    let newsFeedWithImages = self.setImages(for: newsFeed)
+                    self.updateSearchRequests(searchRequest: searchText, newsFeed: newsFeedWithImages)
+                    self.newsFeed = newsFeedWithImages
                     completion!(true, nil)
+                    
                 } else {
                     completion!(false, nil)
                 }
             } else {
+                let searchRequest = SearchRequestModel(text: searchText)
+                
+                if self.cashedNewsFeeds[searchRequest] != nil {
+                    self.newsFeed = self.cashedNewsFeeds[searchRequest]
+                }
                 completion!(false, error)
             }
         })
     }
     
-    func saveNewsSearch(search: String, news: [ArticleModel]) {
-        if cashedNewsFeeds.count < 5 {
-            let searchRequest = SearchRequestModel(text: search)
-            printCashedHash(search: searchRequest)
-            cashedNewsFeeds![searchRequest] = news
-        } else {
+    func updateSearchRequests(searchRequest: String, newsFeed: [ArticleModel]) {
+        
+        let newSearchRequest = SearchRequestModel(text: searchRequest)
+        
+        if cashedNewsFeeds[newSearchRequest] != nil {
             
+            mySerialQueue.sync {
+                coreDataManager.deleteNews(for: newSearchRequest.text)
+            }
+            cashedNewsFeeds[newSearchRequest] = newsFeed
+            coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
+            
+        } else {
+            if cashedNewsFeeds.count < 5 {
+                cashedNewsFeeds![newSearchRequest] = newsFeed
+                coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
+                
+            } else {
+                let searchRequests = Array(cashedNewsFeeds.keys)
+                let sortedSearchRequests = searchRequests.sorted(by: { $0.date.compare($1.date) == .orderedDescending })
+                let lastSearchRequest = sortedSearchRequests.last
+                let oldNewsFeed = cashedNewsFeeds[lastSearchRequest!]
+                
+                for article in oldNewsFeed! {
+                    imageFileManager.deleteImage(name: article.imageName!, completion: nil)
+                }
+                coreDataManager.deleteNews(for: lastSearchRequest!.text)
+                cashedNewsFeeds[lastSearchRequest!] = nil
+                cashedNewsFeeds[newSearchRequest] = newsFeed
+                coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
+                
+            }
         }
     }
     
-    func loadCashedNewsFeeds() {
+
+    
+    func setImages(for newsFeed: [ArticleModel]) -> [ArticleModel] {
         
+        for article in newsFeed {
+            if let urlToImage = article.urlToImage {
+                imageRequest.downloadImage(from: urlToImage, completion: { image in
+                    article.image = image
+                    self.imageFileManager.saveImage(name: article.imageName!, image: article.image!, completion: nil)
+                })
+            } else {
+                let image = UIImage(named: "No-images-placeholder")
+                article.image = image
+                imageFileManager.saveImage(name: article.imageName!, image: article.image!, completion: nil)
+            }
+        }
+        
+        return newsFeed
     }
     
-    func printCashedHash(search: SearchRequestModel) {
-        print("hashValue:\(search.hashValue)")
+
+    
+    func getCashedNewsFeeds() -> [SearchRequestModel: [ArticleModel]] {
+        
+        var newsFeeds: [SearchRequestModel : [ArticleModel]]!
+        
+        newsFeeds = [:]
+        
+        if let articles = coreDataManager.readNews() {
+            
+            if articles.count != 0 {
+                var searchRequests = [SearchRequestModel]()
+                
+                for article in articles {
+                    var isFound = false
+                    for searchRequest in searchRequests {
+                        if searchRequest.text == article.searchRequest {
+                            isFound = true
+                            break
+                        }
+                    }
+                    if !isFound {
+                        let uniqueSearchRequest = SearchRequestModel(text: article.searchRequest!)
+                        uniqueSearchRequest.date = article.requestDate!
+                        searchRequests.append(uniqueSearchRequest)
+                    }
+                }
+                
+                for searchRequest in searchRequests {
+                    let filteredArticles = articles.filter { $0.searchRequest == searchRequest.text }
+                    
+                    var newsFeed = [ArticleModel]()
+                    
+                    for article in filteredArticles {
+                        let articleToAdd = ArticleModel()
+                        articleToAdd.title = article.title
+                        articleToAdd.description = article.newsDescription
+                        articleToAdd.publishedAt = article.publishedAt
+                        articleToAdd.url = article.url
+
+                        if let imageName = article.imageName {
+                            articleToAdd.image = imageFileManager.loadImage(name: imageName)
+                        } else {
+                            articleToAdd.image = UIImage(named: "No-images-placeholder")
+                        }
+                        
+                        newsFeed.append(articleToAdd)
+                    }
+                    
+                    newsFeed = newsFeed.sorted(by: {
+                        $0.publishedAt!.compare($1.publishedAt!) == .orderedDescending
+                    })
+                    
+                    newsFeeds[searchRequest] = newsFeed
+                }
+            } else {
+                newsFeeds = [:]
+            }
+        } else {
+            newsFeeds = [:]
+        }
+    
+        return newsFeeds
+        
     }
     
     init() {
         newsFeed = [ArticleModel]()
-        cashedNewsFeeds = [:]
-//        cashedNewsFeeds = [:]
-//        cashedNewsFeed = [ArticleModel]()
-        loadCashedNewsFeeds()
+        cashedNewsFeeds = getCashedNewsFeeds()
     }
 }

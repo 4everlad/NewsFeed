@@ -11,8 +11,8 @@ import UIKit
 
 class SearchRequestModel {
     
-    var text : String?
-    var date : Date?
+    var text : String
+    var date : Date
     
     init(text: String) {
         self.text = text
@@ -22,7 +22,7 @@ class SearchRequestModel {
 
 extension SearchRequestModel: Equatable {
     static func == (lhs: SearchRequestModel, rhs: SearchRequestModel) -> Bool {
-        return lhs.text == rhs.text && lhs.date == rhs.date
+        return lhs.text == rhs.text
     }
 }
 

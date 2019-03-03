@@ -18,43 +18,26 @@ class CoreDataManager {
     
     static let shared = CoreDataManager()
     
-    func readNews() -> [ArticleModel]? {
-        
-        var articles = [ArticleModel]()
-        
+    func readNews() -> [Article]? {
+
+        var articles = [Article]()
+
         let request = NSFetchRequest<NSFetchRequestResult>(entityName: "Article")
         request.returnsObjectsAsFaults = false
-        
+
         do {
             let result = try context.fetch(request)
-            for article in result as! [NSManagedObject] {
-                let articleToAdd = ArticleModel()
-                articleToAdd.title = (article.value(forKey: "title") as! String)
-                articleToAdd.description = (article.value(forKey: "newsDescription") as! String)
-                articleToAdd.publishedAt = (article.value(forKey: "publishedAt") as! Date)
-                
-                if let dataImage = article.value(forKey: "image") as? Data {
-                    let image = UIImage(data: dataImage)
-                    articleToAdd.image = image
-                }
-                
-                articles.append(articleToAdd)
-                
-            }
+
+            articles = result as! [Article]
+
         } catch {
             print("Failed")
         }
-        
+
         return articles
     }
     
-    
-    
-    func saveNews(for articles: [ArticleModel]) {
-        
-        if readNews() != nil {
-            deleteNews()
-        }
+    func saveNews(for searchRequest: SearchRequestModel, with articles: [ArticleModel]) {
         
         for article in articles {
             let insertNewArticle = NSEntityDescription.insertNewObject(forEntityName: "Article",
@@ -63,28 +46,31 @@ class CoreDataManager {
             insertNewArticle.newsDescription = article.description
             insertNewArticle.publishedAt = article.publishedAt
             insertNewArticle.url = article.url
-            if let image = article.image {
-                insertNewArticle.image = image.jpegData(compressionQuality: 1.0)
-            }
+            insertNewArticle.imageName = article.imageName
+            insertNewArticle.searchRequest = searchRequest.text
+            insertNewArticle.requestDate = searchRequest.date
+            
         }
         
         performSave()
         
     }
     
-    func deleteNews() {
+    func deleteNews(for searchRequest: String) {
         
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Article")
         
-        // Configure Fetch Request
+        let predicate = NSPredicate(format: "searchRequest CONTAINS[C] %@", searchRequest)
+        
         fetchRequest.includesPropertyValues = false
+        fetchRequest.predicate = predicate
         
         do {
             let articles = try context.fetch(fetchRequest) as! [NSManagedObject]
             for article in articles {
                 context.delete(article)
             }
-            // Save Changes
+            
             performSave()
             
         } catch {
@@ -92,7 +78,7 @@ class CoreDataManager {
         }
     }
     
-    func performSave() {
+    private func performSave() {
         do {
             try context.save()
         } catch {

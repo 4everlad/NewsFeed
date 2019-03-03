@@ -12,34 +12,6 @@ import UIKit
 class NewsFeedRequest {
     
     static let shared = NewsFeedRequest()
-
-    
-//    var delegate: NewsFeedUpdateDelegate!
-    
-//    var newsFeed: [ArticleModel]! {
-//        didSet {
-//            delegate.updateTableView()
-//            var numberCashedNewsFeed: Int!
-//            let numberNewsFeed = newsFeed.count
-//            if numberNewsFeed > 5 {
-//                var isReadyForSaving = true
-//                for index in 1...5 {
-//                    if newsFeed[index].image == nil {
-//                        isReadyForSaving = false
-////                        break
-//                    }
-//                }
-//                if isReadyForSaving == true {
-//                    var cashedNewsFeed = [ArticleModel]()
-//                    for index in 1...5 {
-//                        cashedNewsFeed.append(newsFeed[index])
-//                    }
-//                    self.dataManager.saveNews(for: cashedNewsFeed)
-//                }
-//
-//            }
-//        }
-//    }
     
     func requestNews(searchText: String, completion: @escaping ([ArticleModel]?, Error?)->()) {
         
@@ -51,11 +23,6 @@ class NewsFeedRequest {
                 let data = data
                 else {
                     print("No connection")
-//                    if let cashedNewsFeed = self.dataManager.readNews() {
-//                        self.newsFeed = cashedNewsFeed
-//                    } else {
-//                        print("No cashed NewsFeed")
-//                    }
                     completion(nil, error)
                     return
             }
@@ -102,12 +69,11 @@ class NewsFeedRequest {
                     }
                     
                     if let urlToImage = article.urlToImage {
-                        downloadImage(from: urlToImage, completion: { downloadedImage in
-                            articleForNewsFeed.image = downloadedImage
-//                            self.delegate.updateTableView()
-                        } )
+                        articleForNewsFeed.urlToImage = urlToImage
+                        
                     } else {
-                        articleForNewsFeed.image = UIImage(named: "No-images-placeholder")
+                        articleForNewsFeed.urlToImage = nil
+
                     }
                     
                     if let publishedAt = article.publishedAt {
@@ -124,6 +90,9 @@ class NewsFeedRequest {
                         articleForNewsFeed.url = url
                     }
                     
+                    
+                    articleForNewsFeed.imageName = String(articleForNewsFeed.hashValue)
+                    
                     newsFeed.append(articleForNewsFeed)
                     
                 }
@@ -133,22 +102,14 @@ class NewsFeedRequest {
             
         } catch {
             print("JSON parsing error: " + error.localizedDescription)
-//            completion(nil, error)
+
             return nil
         }
         
         
-//        var isParsed = false
-        
-//        while(!isParsed) {
-//            for article in newsFeed {
-//                isParsed = true
-//                if article.image == nil {
-//                    isParsed = false
-//                    break
-//                }
-//            }
-//        }
+        newsFeed = newsFeed.sorted(by: {
+            $0.publishedAt!.compare($1.publishedAt!) == .orderedDescending
+        })
         
         return newsFeed
     }
@@ -168,9 +129,11 @@ class NewsFeedRequest {
                 image = UIImage(data: data)
                 if let parsedImage = image {
                     completion(parsedImage)
+                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateTableView"), object: nil)
                 } else {
                     let image = UIImage(named: "No-images-placeholder")
                     completion(image!)
+                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateTableView"), object: nil)
                 }
             })
             print("b")
@@ -188,8 +151,6 @@ class NewsFeedRequest {
     }
     
     init() {
-//        newsFeed = [ArticleModel]()
-        
-//        requestNews()
+
     }
 }

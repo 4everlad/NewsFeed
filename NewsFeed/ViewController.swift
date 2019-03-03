@@ -15,16 +15,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var filteredNewsFeed = [ArticleModel]()
     var resultSearchController = UISearchController()
     
-//    var newsFeedRequest = NewsFeedRequest.shared
-    
     var isSearching : Bool!
-    
     
     var expandedIndexes: Set<Int>!
 
     @IBOutlet weak var tableView: UITableView!
     
-    func updateTableView(){
+    @objc func updateTableView(_ notification: Notification){
         DispatchQueue.main.async {
             self.tableView.reloadData()
         }
@@ -44,11 +41,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             return dataManager.newsFeed.count
         }
         else {
-            return 0
-//            return newsFeedRequest.newsFeed.count
+            return dataManager.cashedNewsFeeds.count
         }
         
-        // dataManager.cashedNewsFeed.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -76,11 +71,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
             
         } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "HistorySearchTableViewCell", for: indexPath) as! HistorySearchTableViewCell
+            let cell = tableView.dequeueReusableCell(withIdentifier: "HistorySearchCell", for: indexPath) as! HistorySearchTableViewCell
             
-            //let searchResult = cashedNewsFeed
+            let searchRequests = Array(dataManager.cashedNewsFeeds.keys)
             
+            let sortedSearchRequests = searchRequests.sorted(by: { $0.date.compare($1.date) == .orderedDescending })
             
+            let searchRequest = sortedSearchRequests[indexPath.section]
+            
+            cell.searchRequest = searchRequest.text
             
             return cell
         }
@@ -104,8 +103,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 tableView.endUpdates()
             }
         } else {
-            // newsFeed = cashedNewsFeed[indexPath.section]
-            // searchController.searchBar.text
+            
+            let searchRequests = Array(dataManager.cashedNewsFeeds.keys)
+            
+            let sortedSearchRequests = searchRequests.sorted(by: { $0.date.compare($1.date) == .orderedDescending })
+            
+            let selectedSearchRequest = sortedSearchRequests[indexPath.section]
+            
+            dataManager.newsFeed = dataManager.cashedNewsFeeds![selectedSearchRequest]
+            resultSearchController.searchBar.text = selectedSearchRequest.text
+            resultSearchController.isActive = true
+            tableView.reloadData()
         }
         
     }
@@ -161,13 +169,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                             
                         self.dataManager.performSearch(searchText: preparedSearchText, completion: { result, error in
                             if result == true {
-                                    // make saving to database
                                 DispatchQueue.main.async {
                                     self.tableView.reloadData()
                                 }
-                            } else {
-                                print ("Search is not available")
-                                    // show alert
+                            } else if result == false && error != nil {
+                                print ("error: \(error)")
+                                DispatchQueue.main.async {
+                                    self.tableView.reloadData()
+                                }
                             }
                         })
                         }
@@ -176,14 +185,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: performSearch)
                     
                     isSearching = true
-                    
-//                }
+                
             } else {
                 showAlert()
                 searchController.searchBar.text?.removeAll()
                 view.endEditing(true)
                 
-                // show alert
             }
         } else {
             isSearching = false
@@ -212,6 +219,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         tableView.register(UINib(nibName: "DetailedNewsFeedTableViewCell", bundle: Bundle.main), forCellReuseIdentifier: "DetailedNewsFeedCell")
         
+        tableView.register(UINib(nibName: "HistorySearchTableViewCell", bundle: Bundle.main), forCellReuseIdentifier: "HistorySearchCell")
+        
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 200
         
@@ -236,6 +245,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             return controller
         })()
         
+        NotificationCenter.default.addObserver(self, selector: #selector(updateTableView(_:)), name: NSNotification.Name(rawValue: "updateTableView"), object: nil)
+        
         tableView.reloadData()
         // Do any additional setup after loading the view, typically from a nib.
     }
@@ -250,7 +261,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
 }
 
 protocol NewsFeedUpdateDelegate {
-    func updateTableView()
+    func updateTableView(_ notification: Notification)
 }
 
 extension String {
