@@ -25,11 +25,11 @@ class ImageFileManager {
         }
     }
     
-    func loadImage(name: String) -> UIImage {
+    func loadImage(name: String, completion: ((_ success: Bool, _ error: Error?)->())?) -> UIImage? {
         let filename = self.getDocumentsDirectory().appendingPathComponent("\(name).png")
         let image = UIImage(contentsOfFile: filename.path)
         
-        return image!
+        return image
     }
     
     func deleteImage(name: String, completion: ((_ success: Bool, _ error: Error?)->())?) {

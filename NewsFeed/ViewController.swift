@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, NewsFeedUpdateDelegate, UISearchResultsUpdating, UISearchBarDelegate {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, NewsFeedUpdateDelegate, UISearchResultsUpdating, UISearchBarDelegate, UITextViewDelegate {
     
     var dataManager = DataManager.shared
     
@@ -20,6 +20,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var expandedIndexes: Set<Int>!
 
     @IBOutlet weak var tableView: UITableView!
+    
+    func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange) -> Bool {
+        
+        UIApplication.shared.open(URL, options: [:])
+        
+        return true
+    }
     
     @objc func updateTableView(_ notification: Notification){
         DispatchQueue.main.async {
@@ -63,9 +70,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 let cell = tableView.dequeueReusableCell(withIdentifier: "DetailedNewsFeedCell", for: indexPath) as! DetailedNewsFeedTableViewCell
                 
                 let article = dataManager.newsFeed[indexPath.section]
+                
                 cell.newsDescription = article.description
                 cell.publishedAt = article.publishedAt
                 cell.url = article.url
+                
+                cell.urlTextView.delegate = self
                 
                 return cell
             }
@@ -212,6 +222,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         dataManager.delegate = self
         
+        
         self.tableView.dataSource = self
         self.tableView.delegate = self
         
@@ -269,3 +280,12 @@ extension String {
         return !isEmpty && range(of: "[^a-zA-Z0-9]", options: .regularExpression) == nil
     }
 }
+
+//extension ViewController: UITextViewDelegate {
+//    func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange) -> Bool {
+//
+//        UIApplication.shared.open(URL, options: [:])
+//
+//        return true
+//    }
+//}

@@ -17,17 +17,21 @@ class ImageRequest {
         
         if let imageUrl = URL(string: url) {
             print("Image Download Started")
-            var image: UIImage?
+//            var image: UIImage?
             getData(from: imageUrl, completion: { data, response, error in
                 guard let data = data, error == nil else { let image = UIImage(named: "No-images-placeholder")
                     completion(image!)
                     return }
                 print(response?.suggestedFilename ?? imageUrl.lastPathComponent)
                 print("Image Download Finished")
-                image = UIImage(data: data)
-                completion(image!)
-                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateTableView"), object: nil)
-
+                if let image = UIImage(data: data){
+                    completion(image)
+                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateTableView"), object: nil)
+                } else {
+                    let image = UIImage(named: "No-images-placeholder")
+                    completion(image!)
+                }
+                
             })
             print("b")
         } else {

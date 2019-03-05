@@ -26,7 +26,7 @@ class DetailedNewsFeedTableViewCell: UITableViewCell {
     
     var url: String? {
         didSet {
-            urlLabel.text = url
+            urlTextView.text = url
         }
     }
     
@@ -41,12 +41,25 @@ class DetailedNewsFeedTableViewCell: UITableViewCell {
     }
     
     
-    @IBOutlet weak var urlLabel: UILabel! {
+    @IBOutlet weak var urlTextView: UITextView! {
         didSet {
-            urlLabel.numberOfLines = 0
-            urlLabel.sizeToFit()
+            urlTextView.isEditable = false
+            urlTextView.isUserInteractionEnabled = true
+            urlTextView.dataDetectorTypes = UIDataDetectorTypes.link
+            urlTextView.isSelectable = true
+            urlTextView.sizeToFit()
         }
     }
+    
+    
+//    @IBOutlet weak var urlLabel: UILabel! {
+//        didSet {
+//            urlLabel.numberOfLines = 0
+//            urlLabel.sizeToFit()
+//        }
+//    }
+    
+    
 
 
 
@@ -62,4 +75,5 @@ class DetailedNewsFeedTableViewCell: UITableViewCell {
     }
     
 }
+
 

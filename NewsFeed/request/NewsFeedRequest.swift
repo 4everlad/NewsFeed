@@ -28,7 +28,11 @@ class NewsFeedRequest {
             }
             print("quote: \(data)")
             if let newsFeed = self.parseNews(data: data) {
-                completion(newsFeed, nil)
+                if newsFeed.count > 0 {
+                    completion(newsFeed, nil)
+                } else {
+                    completion(nil, nil)
+                }
             } else {
                 completion(nil, nil)
             }

@@ -66,25 +66,29 @@ class DataManager {
                 coreDataManager.deleteNews(for: newSearchRequest.text)
             }
             cashedNewsFeeds[newSearchRequest] = newsFeed
-            coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
+            mySerialQueue.sync {
+                coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
+            }
             
         } else {
-            if cashedNewsFeeds.count < 5 {
-                cashedNewsFeeds![newSearchRequest] = newsFeed
-                coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
-                
-            } else {
+            if cashedNewsFeeds.count >= 5 {
                 let searchRequests = Array(cashedNewsFeeds.keys)
                 let sortedSearchRequests = searchRequests.sorted(by: { $0.date.compare($1.date) == .orderedDescending })
                 let lastSearchRequest = sortedSearchRequests.last
                 let oldNewsFeed = cashedNewsFeeds[lastSearchRequest!]
                 
                 for article in oldNewsFeed! {
-                    imageFileManager.deleteImage(name: article.imageName!, completion: nil)
+                    if let imageName = article.imageName {
+                        imageFileManager.deleteImage(name: imageName, completion: nil)
+                    }
                 }
                 coreDataManager.deleteNews(for: lastSearchRequest!.text)
                 cashedNewsFeeds[lastSearchRequest!] = nil
                 cashedNewsFeeds[newSearchRequest] = newsFeed
+                coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
+                
+            } else {
+                cashedNewsFeeds![newSearchRequest] = newsFeed
                 coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
                 
             }
@@ -152,7 +156,7 @@ class DataManager {
                         articleToAdd.url = article.url
 
                         if let imageName = article.imageName {
-                            articleToAdd.image = imageFileManager.loadImage(name: imageName)
+                            articleToAdd.image = imageFileManager.loadImage(name: imageName, completion: nil)
                         } else {
                             articleToAdd.image = UIImage(named: "No-images-placeholder")
                         }
