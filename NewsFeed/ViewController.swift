@@ -15,17 +15,25 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var filteredNewsFeed = [ArticleModel]()
     var resultSearchController = UISearchController()
     
-    var isSearching : Bool!
+//    var isSearching : Bool!
     
     var expandedIndexes: Set<Int>!
 
     @IBOutlet weak var tableView: UITableView!
     
-    func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange) -> Bool {
-        
-        UIApplication.shared.open(URL, options: [:])
-        
-        return true
+//    func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange) -> Bool {
+//        
+//        UIApplication.shared.open(URL, options: [:])
+//        
+//        return true
+//    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        if let latestSearchRequest = dataManager.searchRequest {
+            if let newsFeed = dataManager.newsFeed {
+                dataManager.updateSearchRequests(searchRequest: latestSearchRequest, newsFeed: newsFeed)
+            }
+        }
     }
     
     @objc func updateTableView(_ notification: Notification){
@@ -160,6 +168,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func updateSearchResults(for searchController: UISearchController) {
         
+        dataManager.searchRequest = nil
         dataManager.newsFeed.removeAll()
         expandedIndexes.removeAll()
         
@@ -174,7 +183,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 
                 let performSearch = DispatchWorkItem (qos: .userInitiated, flags:[.enforceQoS]) {
                     if searchText == searchController.searchBar.text {
-                            
+                        
+                        self.dataManager.searchRequest = SearchRequestModel(text: searchText)
+                        
                         let preparedSearchText = self.prepareText(for: searchText)
                             
                         self.dataManager.performSearch(searchText: preparedSearchText, completion: { result, error in
@@ -194,7 +205,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: performSearch)
                     
-                    isSearching = true
+//                    isSearching = true
                 
             } else {
                 showAlert()
@@ -203,7 +214,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 
             }
         } else {
-            isSearching = false
+//            isSearching = false
             view.endEditing(true)
         }
         
@@ -216,7 +227,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        isSearching = false
+//        isSearching = false
         
         expandedIndexes = Set<Int>()
         

@@ -13,21 +13,25 @@ class DataManager {
     
     static let shared = DataManager()
     
+    var numberSearchRequests: Int!
+    
     var coreDataManager = CoreDataManager.shared
     
     var newsFeedRequest = NewsFeedRequest.shared
     
-    var imageRequest = ImageRequest.shared
+//    var imageRequest = ImageRequest.shared
     
     var imageFileManager = ImageFileManager.shared
     
     var delegate: NewsFeedUpdateDelegate!
     
     var newsFeed: [ArticleModel]!
+    
+    var searchRequest: SearchRequestModel?
 
+    let queue = DispatchQueue.global(qos: .utility)
     
-    let mySerialQueue = DispatchQueue(label: "com.NewsFeed.mySerial")
-    
+//    let mySerialQueue = DispatchQueue(label: "com.NewsFeed.mySerial", qos: .userInitiated, attributes: .concurrent)
     
     var cashedNewsFeeds: [SearchRequestModel : [ArticleModel]]!
     
@@ -36,9 +40,10 @@ class DataManager {
             if error == nil {
                 if let newsFeed = parsedNewsFeed {
                     
+//                    self.searchRequest = SearchRequestModel(text: searchText)
                     // добавить getimages(for newsFeed)
                     let newsFeedWithImages = self.setImages(for: newsFeed)
-                    self.updateSearchRequests(searchRequest: searchText, newsFeed: newsFeedWithImages)
+//                    self.updateSearchRequests(searchRequest: self.searchRequest!, newsFeed: newsFeedWithImages)
                     self.newsFeed = newsFeedWithImages
                     completion!(true, nil)
                     
@@ -46,32 +51,34 @@ class DataManager {
                     completion!(false, nil)
                 }
             } else {
-                let searchRequest = SearchRequestModel(text: searchText)
+//                self.searchRequest = SearchRequestModel(text: searchText)
                 
-                if self.cashedNewsFeeds[searchRequest] != nil {
-                    self.newsFeed = self.cashedNewsFeeds[searchRequest]
+                if self.cashedNewsFeeds[self.searchRequest!] != nil {
+                    self.newsFeed = self.cashedNewsFeeds[self.searchRequest!]
                 }
                 completion!(false, error)
             }
         })
     }
     
-    func updateSearchRequests(searchRequest: String, newsFeed: [ArticleModel]) {
+    
+    func updateSearchRequests(searchRequest: SearchRequestModel, newsFeed: [ArticleModel]) {
         
-        let newSearchRequest = SearchRequestModel(text: searchRequest)
+        let newSearchRequest = searchRequest
         
         if cashedNewsFeeds[newSearchRequest] != nil {
             
-            mySerialQueue.sync {
-                coreDataManager.deleteNews(for: newSearchRequest.text)
-            }
+//            queue.async {
+                self.coreDataManager.deleteNews(for: newSearchRequest.text)
+//            }
             cashedNewsFeeds[newSearchRequest] = newsFeed
-            mySerialQueue.sync {
-                coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
+            queue.async {
+                self.coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
+                self.saveImages(for: newsFeed)
             }
             
         } else {
-            if cashedNewsFeeds.count >= 5 {
+            if cashedNewsFeeds.count >= numberSearchRequests {
                 let searchRequests = Array(cashedNewsFeeds.keys)
                 let sortedSearchRequests = searchRequests.sorted(by: { $0.date.compare($1.date) == .orderedDescending })
                 let lastSearchRequest = sortedSearchRequests.last
@@ -82,34 +89,51 @@ class DataManager {
                         imageFileManager.deleteImage(name: imageName, completion: nil)
                     }
                 }
-                coreDataManager.deleteNews(for: lastSearchRequest!.text)
+                queue.async {
+                    self.coreDataManager.deleteNews(for: lastSearchRequest!.text)
+                }
                 cashedNewsFeeds[lastSearchRequest!] = nil
                 cashedNewsFeeds[newSearchRequest] = newsFeed
-                coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
+                queue.async {
+                    self.coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
+                }
+                queue.async {
+                    self.saveImages(for: newsFeed)
+                }
                 
             } else {
                 cashedNewsFeeds![newSearchRequest] = newsFeed
-                coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
-                
+                queue.async {
+                    self.coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
+                }
+                queue.async {
+                    self.saveImages(for: newsFeed)
+                }
             }
         }
     }
     
-
+    func saveImages(for newsFeed: [ArticleModel]) {
+        for article in newsFeed {
+            if let imageName = article.imageName {
+                if let image = article.image {
+                    imageFileManager.saveImage(name: imageName, image: image, completion: nil)
+                }
+            }
+        }
+    }
     
     func setImages(for newsFeed: [ArticleModel]) -> [ArticleModel] {
         
         for article in newsFeed {
             if let urlToImage = article.urlToImage {
+                let imageRequest = ImageRequest()
                 imageRequest.downloadImage(from: urlToImage, completion: { image in
                     article.image = image
-                    self.imageFileManager.saveImage(name: article.imageName!, image: article.image!, completion: nil)
+//                    self.imageFileManager.saveImage(name: article.imageName!, image: article.image!, completion: nil)
                 })
-            } else {
-                let image = UIImage(named: "No-images-placeholder")
-                article.image = image
-                imageFileManager.saveImage(name: article.imageName!, image: article.image!, completion: nil)
             }
+
         }
         
         return newsFeed
@@ -158,7 +182,8 @@ class DataManager {
                         if let imageName = article.imageName {
                             articleToAdd.image = imageFileManager.loadImage(name: imageName, completion: nil)
                         } else {
-                            articleToAdd.image = UIImage(named: "No-images-placeholder")
+                            articleToAdd.image = nil
+//                            articleToAdd.image = UIImage(named: "No-images-placeholder")
                         }
                         
                         newsFeed.append(articleToAdd)
@@ -184,5 +209,6 @@ class DataManager {
     init() {
         newsFeed = [ArticleModel]()
         cashedNewsFeeds = getCashedNewsFeeds()
+        numberSearchRequests = 5
     }
 }

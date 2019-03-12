@@ -18,7 +18,11 @@ class NewsFeedTableViewCell: UITableViewCell {
     
     var articleImg: UIImage? {
         didSet {
-            articleImage.image = articleImg
+            if articleImg != nil {
+                articleImage.image = articleImg
+            } else {
+                articleImage.image = UIImage(named: "No-images-placeholder")
+            }
         }
     }
     

@@ -52,14 +52,6 @@ class DetailedNewsFeedTableViewCell: UITableViewCell {
     }
     
     
-//    @IBOutlet weak var urlLabel: UILabel! {
-//        didSet {
-//            urlLabel.numberOfLines = 0
-//            urlLabel.sizeToFit()
-//        }
-//    }
-    
-    
 
 
 

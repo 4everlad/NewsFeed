@@ -11,33 +11,39 @@ import UIKit
 
 class ImageRequest {
     
-    static let shared = ImageRequest()
+//    static let shared = ImageRequest()
     
-    func downloadImage(from url: String, completion: @escaping(UIImage)->()) {
+    let queue = DispatchQueue.global(qos: .utility)
+    
+    func downloadImage(from url: String, completion: @escaping(UIImage?)->()) {
         
         if let imageUrl = URL(string: url) {
             print("Image Download Started")
 //            var image: UIImage?
-            getData(from: imageUrl, completion: { data, response, error in
-                guard let data = data, error == nil else { let image = UIImage(named: "No-images-placeholder")
-                    completion(image!)
-                    return }
-                print(response?.suggestedFilename ?? imageUrl.lastPathComponent)
-                print("Image Download Finished")
-                if let image = UIImage(data: data){
-                    completion(image)
-                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateTableView"), object: nil)
-                } else {
-                    let image = UIImage(named: "No-images-placeholder")
-                    completion(image!)
-                }
-                
-            })
+            queue.async {
+                self.getData(from: imageUrl, completion: { data, response, error in
+                    guard let data = data, error == nil else {
+                        completion(nil)
+                        return }
+                    print(response?.suggestedFilename ?? imageUrl.lastPathComponent)
+                    print("Image Download Finished")
+                    DispatchQueue.main.async {
+                        if let image = UIImage(data: data){
+                            completion(image)
+                            NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateTableView"), object: nil)
+                        } else {
+                            completion(nil)
+                        }
+                    }
+                    
+                    
+                })
+            }
+            
             print("b")
         } else {
             print("URL is gone")
-            let image = UIImage(named: "No-images-placeholder")
-            completion(image!)
+            completion(nil)
         }
         
     }
@@ -47,7 +53,4 @@ class ImageRequest {
         
     }
     
-    init() {
-        
-    }
 }

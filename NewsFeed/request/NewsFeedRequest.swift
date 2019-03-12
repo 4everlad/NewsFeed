@@ -13,32 +13,36 @@ class NewsFeedRequest {
     
     static let shared = NewsFeedRequest()
     
+    let queue = DispatchQueue.global(qos: .utility)
+    
     func requestNews(searchText: String, completion: @escaping ([ArticleModel]?, Error?)->()) {
         
         let url = URL(string: "https://newsapi.org/v2/everything?q=\(searchText)&apiKey=b59bc1f13f884301a259ebc4a7c68af2")!
-        
-        let dataTask = URLSession.shared.dataTask(with: url) { data, response, error in
-            guard error == nil,
-                (response as? HTTPURLResponse)?.statusCode == 200,
-                let data = data
-                else {
-                    print("No connection")
-                    completion(nil, error)
-                    return
-            }
-            print("quote: \(data)")
-            if let newsFeed = self.parseNews(data: data) {
-                if newsFeed.count > 0 {
-                    completion(newsFeed, nil)
+        queue.async {
+            let dataTask = URLSession.shared.dataTask(with: url) { data, response, error in
+                guard error == nil,
+                    (response as? HTTPURLResponse)?.statusCode == 200,
+                    let data = data
+                    else {
+                        print("No connection")
+                        completion(nil, error)
+                        return
+                }
+                
+                print("quote: \(data)")
+                if let newsFeed = self.parseNews(data: data) {
+                    if newsFeed.count > 0 {
+                        completion(newsFeed, nil)
+                    } else {
+                        completion(nil, nil)
+                    }
                 } else {
                     completion(nil, nil)
                 }
-            } else {
-                completion(nil, nil)
             }
+            dataTask.resume()
         }
         
-        dataTask.resume()
     }
     
     
@@ -74,7 +78,7 @@ class NewsFeedRequest {
                     
                     if let urlToImage = article.urlToImage {
                         articleForNewsFeed.urlToImage = urlToImage
-                        
+                        articleForNewsFeed.imageName = String(articleForNewsFeed.hashValue)
                     } else {
                         articleForNewsFeed.urlToImage = nil
 
@@ -94,8 +98,6 @@ class NewsFeedRequest {
                         articleForNewsFeed.url = url
                     }
                     
-                    
-                    articleForNewsFeed.imageName = String(articleForNewsFeed.hashValue)
                     
                     newsFeed.append(articleForNewsFeed)
                     
@@ -118,41 +120,6 @@ class NewsFeedRequest {
         return newsFeed
     }
     
-    
-    func downloadImage(from url: String, completion: @escaping(UIImage)->()) {
-        
-        if let imageUrl = URL(string: url) {
-            print("Image Download Started")
-            var image: UIImage?
-            getData(from: imageUrl, completion: { data, response, error in
-                guard let data = data, error == nil else { let image = UIImage(named: "No-images-placeholder")
-                    completion(image!)
-                    return }
-                print(response?.suggestedFilename ?? imageUrl.lastPathComponent)
-                print("Image Download Finished")
-                image = UIImage(data: data)
-                if let parsedImage = image {
-                    completion(parsedImage)
-                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateTableView"), object: nil)
-                } else {
-                    let image = UIImage(named: "No-images-placeholder")
-                    completion(image!)
-                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateTableView"), object: nil)
-                }
-            })
-            print("b")
-        } else {
-            print("URL is gone")
-            let image = UIImage(named: "No-images-placeholder")
-            completion(image!)
-        } 
-        
-    }
-    
-    func getData(from url: URL, completion: @escaping (Data?, URLResponse?, Error?) -> (Void)) {
-        URLSession.shared.dataTask(with: url, completionHandler: completion).resume()
-        
-    }
     
     init() {
 
