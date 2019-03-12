@@ -17,11 +17,11 @@ class DataManager {
     
     var coreDataManager = CoreDataManager.shared
     
-    var newsFeedRequest = NewsFeedRequest.shared
+    var newsFeedFetcher = NewsFeedFetcher.shared
     
 //    var imageRequest = ImageRequest.shared
     
-    var imageFileManager = ImageFileManager.shared
+//    var imageFileManager = ImageFileManager.shared
     
     var delegate: NewsFeedUpdateDelegate!
     
@@ -36,7 +36,7 @@ class DataManager {
     var cashedNewsFeeds: [SearchRequestModel : [ArticleModel]]!
     
     func performSearch(searchText: String, completion: ((_ success: Bool, _ error: Error?) -> Void)? ) {
-        newsFeedRequest.requestNews(searchText: searchText, completion: { parsedNewsFeed, error in
+        newsFeedFetcher.requestNews(searchText: searchText, completion: { parsedNewsFeed, error in
             if error == nil {
                 if let newsFeed = parsedNewsFeed {
                     
@@ -67,10 +67,9 @@ class DataManager {
         let newSearchRequest = searchRequest
         
         if cashedNewsFeeds[newSearchRequest] != nil {
-            
-//            queue.async {
-                self.coreDataManager.deleteNews(for: newSearchRequest.text)
-//            }
+
+            self.coreDataManager.deleteNews(for: newSearchRequest.text)
+
             cashedNewsFeeds[newSearchRequest] = newsFeed
             queue.async {
                 self.coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
@@ -86,6 +85,7 @@ class DataManager {
                 
                 for article in oldNewsFeed! {
                     if let imageName = article.imageName {
+                        let imageFileManager = ImageFileManager()
                         imageFileManager.deleteImage(name: imageName, completion: nil)
                     }
                 }
@@ -117,6 +117,7 @@ class DataManager {
         for article in newsFeed {
             if let imageName = article.imageName {
                 if let image = article.image {
+                    let imageFileManager = ImageFileManager()
                     imageFileManager.saveImage(name: imageName, image: image, completion: nil)
                 }
             }
@@ -127,8 +128,8 @@ class DataManager {
         
         for article in newsFeed {
             if let urlToImage = article.urlToImage {
-                let imageRequest = ImageRequest()
-                imageRequest.downloadImage(from: urlToImage, completion: { image in
+                let imageFetcher = ImageFetcher()
+                imageFetcher.downloadImage(from: urlToImage, completion: { image in
                     article.image = image
 //                    self.imageFileManager.saveImage(name: article.imageName!, image: article.image!, completion: nil)
                 })
@@ -180,6 +181,7 @@ class DataManager {
                         articleToAdd.url = article.url
 
                         if let imageName = article.imageName {
+                            let imageFileManager = ImageFileManager()
                             articleToAdd.image = imageFileManager.loadImage(name: imageName, completion: nil)
                         } else {
                             articleToAdd.image = nil

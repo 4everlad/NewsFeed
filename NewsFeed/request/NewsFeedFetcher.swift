@@ -9,9 +9,9 @@
 import Foundation
 import UIKit
 
-class NewsFeedRequest {
+class NewsFeedFetcher {
     
-    static let shared = NewsFeedRequest()
+    static let shared = NewsFeedFetcher()
     
     let queue = DispatchQueue.global(qos: .utility)
     
