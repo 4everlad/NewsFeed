@@ -50,9 +50,6 @@ class DetailedNewsFeedTableViewCell: UITableViewCell {
             urlTextView.sizeToFit()
         }
     }
-    
-    
-
 
 
     override func awakeFromNib() {

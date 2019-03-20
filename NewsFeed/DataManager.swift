@@ -19,19 +19,13 @@ class DataManager {
     
     var newsFeedFetcher = NewsFeedFetcher.shared
     
-//    var imageRequest = ImageRequest.shared
-    
-//    var imageFileManager = ImageFileManager.shared
-    
     var delegate: NewsFeedUpdateDelegate!
     
     var newsFeed: [ArticleModel]!
     
     var searchRequest: SearchRequestModel?
 
-    let queue = DispatchQueue.global(qos: .utility)
-    
-//    let mySerialQueue = DispatchQueue(label: "com.NewsFeed.mySerial", qos: .userInitiated, attributes: .concurrent)
+    let utilityQueue = DispatchQueue.global(qos: .utility)
     
     var cashedNewsFeeds: [SearchRequestModel : [ArticleModel]]!
     
@@ -40,10 +34,7 @@ class DataManager {
             if error == nil {
                 if let newsFeed = parsedNewsFeed {
                     
-//                    self.searchRequest = SearchRequestModel(text: searchText)
-                    // добавить getimages(for newsFeed)
                     let newsFeedWithImages = self.setImages(for: newsFeed)
-//                    self.updateSearchRequests(searchRequest: self.searchRequest!, newsFeed: newsFeedWithImages)
                     self.newsFeed = newsFeedWithImages
                     completion!(true, nil)
                     
@@ -51,7 +42,6 @@ class DataManager {
                     completion!(false, nil)
                 }
             } else {
-//                self.searchRequest = SearchRequestModel(text: searchText)
                 
                 if self.cashedNewsFeeds[self.searchRequest!] != nil {
                     self.newsFeed = self.cashedNewsFeeds[self.searchRequest!]
@@ -71,7 +61,7 @@ class DataManager {
             self.coreDataManager.deleteNews(for: newSearchRequest.text)
 
             cashedNewsFeeds[newSearchRequest] = newsFeed
-            queue.async {
+            utilityQueue.async {
                 self.coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
                 self.saveImages(for: newsFeed)
             }
@@ -89,24 +79,24 @@ class DataManager {
                         imageFileManager.deleteImage(name: imageName, completion: nil)
                     }
                 }
-                queue.async {
+                utilityQueue.async {
                     self.coreDataManager.deleteNews(for: lastSearchRequest!.text)
                 }
                 cashedNewsFeeds[lastSearchRequest!] = nil
                 cashedNewsFeeds[newSearchRequest] = newsFeed
-                queue.async {
+                utilityQueue.async {
                     self.coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
                 }
-                queue.async {
+                utilityQueue.async {
                     self.saveImages(for: newsFeed)
                 }
                 
             } else {
                 cashedNewsFeeds![newSearchRequest] = newsFeed
-                queue.async {
+                utilityQueue.async {
                     self.coreDataManager.saveNews(for: newSearchRequest, with: newsFeed)
                 }
-                queue.async {
+                utilityQueue.async {
                     self.saveImages(for: newsFeed)
                 }
             }
@@ -131,7 +121,6 @@ class DataManager {
                 let imageFetcher = ImageFetcher()
                 imageFetcher.downloadImage(from: urlToImage, completion: { image in
                     article.image = image
-//                    self.imageFileManager.saveImage(name: article.imageName!, image: article.image!, completion: nil)
                 })
             }
 
@@ -148,7 +137,7 @@ class DataManager {
         
         newsFeeds = [:]
         
-        if let articles = coreDataManager.readNews() {
+        guard let articles = coreDataManager.readNews() else { return newsFeeds }
             
             if articles.count != 0 {
                 var searchRequests = [SearchRequestModel]()
@@ -179,13 +168,13 @@ class DataManager {
                         articleToAdd.description = article.newsDescription
                         articleToAdd.publishedAt = article.publishedAt
                         articleToAdd.url = article.url
+                        articleToAdd.isSeen = article.isSeen
 
                         if let imageName = article.imageName {
                             let imageFileManager = ImageFileManager()
                             articleToAdd.image = imageFileManager.loadImage(name: imageName, completion: nil)
                         } else {
                             articleToAdd.image = nil
-//                            articleToAdd.image = UIImage(named: "No-images-placeholder")
                         }
                         
                         newsFeed.append(articleToAdd)
@@ -197,12 +186,14 @@ class DataManager {
                     
                     newsFeeds[searchRequest] = newsFeed
                 }
-            } else {
-                newsFeeds = [:]
             }
-        } else {
-            newsFeeds = [:]
-        }
+//            else {
+//                newsFeeds = [:]
+//            }
+//        }
+//    else {
+//            newsFeeds = [:]
+//        }
     
         return newsFeeds
         

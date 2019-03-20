@@ -21,12 +21,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
 
     @IBOutlet weak var tableView: UITableView!
     
-//    func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange) -> Bool {
-//        
-//        UIApplication.shared.open(URL, options: [:])
-//        
-//        return true
-//    }
     
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         if let latestSearchRequest = dataManager.searchRequest {
@@ -83,8 +77,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 cell.publishedAt = article.publishedAt
                 cell.url = article.url
                 
-                cell.urlTextView.delegate = self
-                
                 return cell
             }
             
@@ -128,7 +120,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
             let selectedSearchRequest = sortedSearchRequests[indexPath.section]
             
-            dataManager.newsFeed = dataManager.cashedNewsFeeds![selectedSearchRequest]
+//            dataManager.newsFeed = dataManager.cashedNewsFeeds![selectedSearchRequest]
             resultSearchController.searchBar.text = selectedSearchRequest.text
             resultSearchController.isActive = true
             tableView.reloadData()
@@ -292,11 +284,4 @@ extension String {
     }
 }
 
-//extension ViewController: UITextViewDelegate {
-//    func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange) -> Bool {
-//
-//        UIApplication.shared.open(URL, options: [:])
-//
-//        return true
-//    }
-//}
+

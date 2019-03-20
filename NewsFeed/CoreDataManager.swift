@@ -47,6 +47,7 @@ class CoreDataManager {
             insertNewArticle.publishedAt = article.publishedAt
             insertNewArticle.url = article.url
             insertNewArticle.imageName = article.imageName
+            insertNewArticle.isSeen = article.isSeen
             insertNewArticle.searchRequest = searchRequest.text
             insertNewArticle.requestDate = searchRequest.date
             
