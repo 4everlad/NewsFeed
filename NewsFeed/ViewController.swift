@@ -15,8 +15,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var filteredNewsFeed = [ArticleModel]()
     var resultSearchController = UISearchController()
     
-//    var isSearching : Bool!
-    
     var expandedIndexes: Set<Int>!
 
     @IBOutlet weak var tableView: UITableView!
@@ -102,14 +100,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             if expandedIndexes.contains(indexPath.section) {
                 expandedIndexes.remove(indexPath.section)
                 tableView.beginUpdates()
-                tableView.deleteRows(at: [IndexPath(row: 1, section: indexPath.section)], with: .automatic)
+                tableView.deleteRows(at: [IndexPath(row: 1, section: indexPath.section)], with: .fade)
+                tableView.reloadRows(at: [IndexPath(row: 0, section: indexPath.section)], with: .fade)
                 tableView.endUpdates()
             } else {
                 expandedIndexes.insert(indexPath.section)
                 dataManager.newsFeed[indexPath.section].isSeen = true
                 tableView.beginUpdates()
-                tableView.insertRows(at: [IndexPath(row: 1, section: indexPath.section)], with: .automatic)
-                tableView.reloadRows(at: [IndexPath(row: 0, section: indexPath.section)], with: .none)
+                
+                tableView.reloadRows(at: [IndexPath(row: 0, section: indexPath.section)], with: .fade)
+                tableView.insertRows(at: [IndexPath(row: 1, section: indexPath.section)], with: .fade)
                 tableView.endUpdates()
             }
         } else {
@@ -120,7 +120,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
             let selectedSearchRequest = sortedSearchRequests[indexPath.section]
             
-//            dataManager.newsFeed = dataManager.cashedNewsFeeds![selectedSearchRequest]
+ 
             resultSearchController.searchBar.text = selectedSearchRequest.text
             resultSearchController.isActive = true
             tableView.reloadData()

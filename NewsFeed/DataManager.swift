@@ -187,21 +187,36 @@ class DataManager {
                     newsFeeds[searchRequest] = newsFeed
                 }
             }
-//            else {
-//                newsFeeds = [:]
-//            }
-//        }
-//    else {
-//            newsFeeds = [:]
-//        }
+        
+        newsFeeds = removeOldSearchRequests(newsFeeds: newsFeeds)
     
+        return newsFeeds
+        
+    }
+    
+    func removeOldSearchRequests(newsFeeds: [SearchRequestModel: [ArticleModel]]) -> [SearchRequestModel: [ArticleModel]] {
+        
+        var newsFeeds = newsFeeds
+        
+        var searchRequests = Array(newsFeeds.keys)
+        
+        searchRequests = searchRequests.sorted(by: { $0.date.compare($1.date) == .orderedDescending })
+        
+        while searchRequests.count > numberSearchRequests {
+            let searchRequestToDelete = searchRequests.removeLast()
+            utilityQueue.async {
+                self.coreDataManager.deleteNews(for: searchRequestToDelete.text)
+            }
+            newsFeeds[searchRequestToDelete] = nil
+        }
+        
         return newsFeeds
         
     }
     
     init() {
         newsFeed = [ArticleModel]()
-        cashedNewsFeeds = getCashedNewsFeeds()
         numberSearchRequests = 5
+        cashedNewsFeeds = getCashedNewsFeeds()
     }
 }
