@@ -11,8 +11,6 @@ import UIKit
 
 class ImageFileManager {
     
-//    static let shared = ImageFileManager()
-    
     func saveImage(name: String, image: UIImage, completion: ((_ success: Bool, _ error: Error?)->())?) {
         
         let data = image.pngData()

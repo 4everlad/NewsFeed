@@ -97,20 +97,23 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if (resultSearchController.isActive) {
-            if expandedIndexes.contains(indexPath.section) {
-                expandedIndexes.remove(indexPath.section)
+                if self.expandedIndexes.contains(indexPath.section) {
+                    self.expandedIndexes.remove(indexPath.section)
+                DispatchQueue.main.async {
                 tableView.beginUpdates()
                 tableView.deleteRows(at: [IndexPath(row: 1, section: indexPath.section)], with: .fade)
                 tableView.reloadRows(at: [IndexPath(row: 0, section: indexPath.section)], with: .fade)
                 tableView.endUpdates()
+                    }
             } else {
-                expandedIndexes.insert(indexPath.section)
-                dataManager.newsFeed[indexPath.section].isSeen = true
+                    self.expandedIndexes.insert(indexPath.section)
+                    self.dataManager.newsFeed[indexPath.section].isSeen = true
+                DispatchQueue.main.async {
                 tableView.beginUpdates()
-                
                 tableView.reloadRows(at: [IndexPath(row: 0, section: indexPath.section)], with: .fade)
                 tableView.insertRows(at: [IndexPath(row: 1, section: indexPath.section)], with: .fade)
                 tableView.endUpdates()
+                    }
             }
         } else {
             
@@ -218,8 +221,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-//        isSearching = false
         
         expandedIndexes = Set<Int>()
         

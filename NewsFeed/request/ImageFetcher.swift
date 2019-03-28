@@ -11,15 +11,12 @@ import UIKit
 
 class ImageFetcher {
     
-//    static let shared = ImageRequest()
-    
     let queue = DispatchQueue.global(qos: .utility)
     
     func downloadImage(from url: String, completion: @escaping(UIImage?)->()) {
         
         if let imageUrl = URL(string: url) {
             print("Image Download Started")
-//            var image: UIImage?
             queue.async {
                 self.getData(from: imageUrl, completion: { data, response, error in
                     guard let data = data, error == nil else {
