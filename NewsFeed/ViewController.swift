@@ -99,20 +99,20 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         if (resultSearchController.isActive) {
                 if self.expandedIndexes.contains(indexPath.section) {
                     self.expandedIndexes.remove(indexPath.section)
-                DispatchQueue.main.async {
-                tableView.beginUpdates()
-                tableView.deleteRows(at: [IndexPath(row: 1, section: indexPath.section)], with: .fade)
-                tableView.reloadRows(at: [IndexPath(row: 0, section: indexPath.section)], with: .fade)
-                tableView.endUpdates()
+                    DispatchQueue.main.async {
+                        tableView.beginUpdates()
+                        tableView.deleteRows(at: [IndexPath(row: 1, section: indexPath.section)], with: .fade)
+                        tableView.reloadRows(at: [IndexPath(row: 0, section: indexPath.section)], with: .fade)
+                        tableView.endUpdates()
                     }
             } else {
                     self.expandedIndexes.insert(indexPath.section)
                     self.dataManager.newsFeed[indexPath.section].isSeen = true
-                DispatchQueue.main.async {
-                tableView.beginUpdates()
-                tableView.reloadRows(at: [IndexPath(row: 0, section: indexPath.section)], with: .fade)
-                tableView.insertRows(at: [IndexPath(row: 1, section: indexPath.section)], with: .fade)
-                tableView.endUpdates()
+                    DispatchQueue.main.async {
+                        tableView.beginUpdates()
+                        tableView.reloadRows(at: [IndexPath(row: 0, section: indexPath.section)], with: .fade)
+                        tableView.insertRows(at: [IndexPath(row: 1, section: indexPath.section)], with: .fade)
+                        tableView.endUpdates()
                     }
             }
         } else {
@@ -126,7 +126,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
  
             resultSearchController.searchBar.text = selectedSearchRequest.text
             resultSearchController.isActive = true
-            tableView.reloadData()
+            DispatchQueue.main.async {
+                tableView.reloadData()
+            }
         }
         
     }
@@ -158,7 +160,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         } else {
             present(alertController, animated: true, completion: nil)
         }
-//        self.present(alertController, animated: true)
     }
     
     func updateSearchResults(for searchController: UISearchController) {
@@ -173,8 +174,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             text = text.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: " ", with: "")
             
             if text.isAlphanumeric {
-//                if let searchText = searchController.searchBar.text,
-//                    !searchText.isEmpty {
                 
                 let performSearch = DispatchWorkItem (qos: .userInitiated, flags:[.enforceQoS]) {
                     if searchText == searchController.searchBar.text {
@@ -189,7 +188,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                                     self.tableView.reloadData()
                                 }
                             } else if result == false && error != nil {
-                                print ("error: \(error)")
+                                print ("error: \(String(describing: error))")
                                 DispatchQueue.main.async {
                                     self.tableView.reloadData()
                                 }
@@ -199,8 +198,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     }
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: performSearch)
-                    
-//                    isSearching = true
                 
             } else {
                 showAlert()
@@ -209,7 +206,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 
             }
         } else {
-//            isSearching = false
             view.endEditing(true)
         }
         
